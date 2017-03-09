@@ -1,0 +1,159 @@
+select 
+    R.*,
+    null as coach_cedula,
+    null as coach_nombres,
+    null as coach_primer_apellido,
+    null as coach_segundo_apellido
+from (
+    select
+        PERSONA.ID_PERSONA as id_persona,
+        PERSONA.CSF_CFSPERSONA as cedula,
+        PERSONA.DES_NOMEPERS as nombres,
+        PERSONA.DES_COGNOMEPERS as primer_apellido,
+        PERSONA.DES_SECCOGNOME as segundo_apellido,
+        PERSONA.DES_EMAIL as email,
+        1 as estado,
+        USUARIO.COD_USERNAME as usuario,
+        ROL_INT.DES_RUOLO as rol_integral,
+        PUESTO_ORG.DES_NOMEPOSTOORG as puesto_organizativo,
+        UNIDAD.DES_DENOMUNITAORG as unidad,
+        PROCESO.DES_AREAATT as proceso,
+        EMPRESA.DES_RAGSOC as empresa,
+        SEDE.DES_SEDE as sede
+    from 
+        CZNDB.ANAGPERS PERSONA left join CZNREP.CFUSERTOKEN USUARIO on PERSONA.ID_PERSONA=USUARIO.ID_PERSON
+        left join CZNREP.CFUSERROLE AUX_USUA on USUARIO.ID_USERTOKEN=AUX_USUA.ID_USERTOKEN
+        left join CZNDB.JOBASSIGN ROL_INT_N on PERSONA.ID_PERSONA=ROL_INT_N.ID_PERSONA
+        left join CZNDB.RUOLO ROL_INT on ROL_INT.COD_RUOLO=ROL_INT_N.COD_RUOLO
+        left join CZNDB.INCARLAV AUX_A on PERSONA.ID_PERSONA=AUX_A.ID_PERSONA
+        left join CZNDB.POSTOORGAN PUESTO_ORG on PUESTO_ORG.ID_POSTOORG=AUX_A.ID_POSTOORG
+        left join CZNDB.UNITAORG UNIDAD on UNIDAD.ID_UNITAORG=AUX_A.ID_UNITAORG
+        left join CZNDB.GERARORGAN AUX_B on AUX_A.ID_UNITAORG=AUX_B.ID_UNITAORG
+        left join CZNDB.TB_AREAATT PROCESO on AUX_B.COD_AREAATT=PROCESO.COD_AREAATT
+        left join CZNDB.COMPREL AUX_C on AUX_C.ID_PERSONA=PERSONA.ID_PERSONA
+        left join CZNDB.CODIFYIMP EMPRESA on AUX_C.COD_IMPRESA=EMPRESA.COD_IMPRESA
+        left join CZNDB.TRASF_SEDE AUX_D on AUX_D.ID_PERSONA=PERSONA.ID_PERSONA
+        left join CZNDB.SEDE SEDE on AUX_D.COD_SEDE=SEDE.COD_SEDE
+    where 
+        (AUX_USUA.COD_ROLE='MANAGER75' OR AUX_USUA.COD_ROLE='SELFSRV') and
+        ROL_INT_N.DTA_FINE='31/12/2999' and
+        ROL_INT.DTA_FINE='31/12/2999'
+    order by ROL_INT_N.DTA_FINE desc, AUX_A.DTA_FINE desc, AUX_C.DTA_FINE desc, AUX_D.DTA_FINE desc, USUARIO.COD_USERNAME asc
+) R, CZNDB.NOTEPERS N_COACH, CZNDB.COMPREL M_COACH, CZNDB.ANAGPERS COACH
+where
+    and R.rol_integral is not null
+    and R.puesto_organizativo is not null
+    and R.unidad is not null and R.unidad not like '*%'
+    and R.proceso is not null
+    and R.empresa is not null
+    and R.sede is not null
+
+union
+
+select 
+    R.*,
+    COACH.CSF_CFSPERSONA as coach_cedula,
+    COACH.DES_NOMEPERS as coach_nombres,
+    COACH.DES_COGNOMEPERS as coach_primer_apellido,
+    COACH.DES_SECCOGNOME as coach_segundo_apellido
+from (
+    select
+        PERSONA.ID_PERSONA as id_persona,
+        PERSONA.CSF_CFSPERSONA as cedula,
+        PERSONA.DES_NOMEPERS as nombres,
+        PERSONA.DES_COGNOMEPERS as primer_apellido,
+        PERSONA.DES_SECCOGNOME as segundo_apellido,
+        PERSONA.DES_EMAIL as email,
+        1 as estado,
+        USUARIO.COD_USERNAME as usuario,
+        ROL_INT.DES_RUOLO as rol_integral,
+        PUESTO_ORG.DES_NOMEPOSTOORG as puesto_organizativo,
+        UNIDAD.DES_DENOMUNITAORG as unidad,
+        PROCESO.DES_AREAATT as proceso,
+        EMPRESA.DES_RAGSOC as empresa,
+        SEDE.DES_SEDE as sede
+    from 
+        CZNDB.ANAGPERS PERSONA left join CZNREP.CFUSERTOKEN USUARIO on PERSONA.ID_PERSONA=USUARIO.ID_PERSON
+        left join CZNREP.CFUSERROLE AUX_USUA on USUARIO.ID_USERTOKEN=AUX_USUA.ID_USERTOKEN
+        left join CZNDB.JOBASSIGN ROL_INT_N on PERSONA.ID_PERSONA=ROL_INT_N.ID_PERSONA
+        left join CZNDB.RUOLO ROL_INT on ROL_INT.COD_RUOLO=ROL_INT_N.COD_RUOLO
+        left join CZNDB.INCARLAV AUX_A on PERSONA.ID_PERSONA=AUX_A.ID_PERSONA
+        left join CZNDB.POSTOORGAN PUESTO_ORG on PUESTO_ORG.ID_POSTOORG=AUX_A.ID_POSTOORG
+        left join CZNDB.UNITAORG UNIDAD on UNIDAD.ID_UNITAORG=AUX_A.ID_UNITAORG
+        left join CZNDB.GERARORGAN AUX_B on AUX_A.ID_UNITAORG=AUX_B.ID_UNITAORG
+        left join CZNDB.TB_AREAATT PROCESO on AUX_B.COD_AREAATT=PROCESO.COD_AREAATT
+        left join CZNDB.COMPREL AUX_C on AUX_C.ID_PERSONA=PERSONA.ID_PERSONA
+        left join CZNDB.CODIFYIMP EMPRESA on AUX_C.COD_IMPRESA=EMPRESA.COD_IMPRESA
+        left join CZNDB.TRASF_SEDE AUX_D on AUX_D.ID_PERSONA=PERSONA.ID_PERSONA
+        left join CZNDB.SEDE SEDE on AUX_D.COD_SEDE=SEDE.COD_SEDE
+    where 
+        (AUX_USUA.COD_ROLE='MANAGER75' OR AUX_USUA.COD_ROLE='SELFSRV') and
+        ROL_INT_N.DTA_FINE='31/12/2999' and
+        ROL_INT.DTA_FINE='31/12/2999'
+    order by ROL_INT_N.DTA_FINE desc, AUX_A.DTA_FINE desc, AUX_C.DTA_FINE desc, AUX_D.DTA_FINE desc, USUARIO.COD_USERNAME asc
+) R, CZNDB.NOTEPERS N_COACH, CZNDB.COMPREL M_COACH, CZNDB.ANAGPERS COACH
+where
+    N_COACH.ID_PERSONA=R.id_persona and M_COACH.COD_MATLIBROMAT like concat('C', N_COACH.COD_TPNOTE) and M_COACH.ID_PERSONA=COACH.ID_PERSONA
+    and R.rol_integral is not null
+    and R.puesto_organizativo is not null
+    and R.unidad is not null and R.unidad not like '*%'
+    and R.proceso is not null
+    and R.empresa is not null
+    and R.sede is not null
+order by M_COACH.DTA_FINE desc
+
+
+
+
+select 
+    PERSONA.CSF_CFSPERSONA as cedula,
+    PERSONA.DES_NOMEPERS as nombres,
+    PERSONA.DES_COGNOMEPERS as primer_apellido,
+    PERSONA.DES_SECCOGNOME as segundo_apellido,
+    PERSONA.DES_EMAIL as email,
+    1 as estado,
+    ROL_INT.DES_RUOLO as rol_integral,
+    USUARIO.COD_USERNAME as usuario,
+    PUESTO_ORG.DES_NOMEPOSTOORG as puesto_organizativo,
+    UNIDAD.DES_DENOMUNITAORG as unidad,
+
+    PROCESO.DES_AREAATT as proceso,
+
+    EMPRESA.DES_RAGSOC as empresa,
+
+    SEDE.DES_SEDE as sede,
+
+    COACH.CSF_CFSPERSONA as coach_cedula,
+    COACH.DES_NOMEPERS as coach_nombres,
+    COACH.DES_COGNOMEPERS as coach_primer_apellido,
+    COACH.DES_SECCOGNOME as coach_segundo_apellido
+
+
+from CZNDB.ANAGPERS PERSONA, CZNREP.CFUSERTOKEN USUARIO, CZNREP.CFUSERROLE AUX_USUA, CZNDB.JOBASSIGN ROL_INT_N, 
+    CZNDB.RUOLO ROL_INT, 
+    CZNDB.INCARLAV AUX_A, CZNDB.POSTOORGAN PUESTO_ORG, CZNDB.UNITAORG UNIDAD,
+
+    CZNDB.GERARORGAN AUX_B, CZNDB.TB_AREAATT PROCESO,
+
+    CZNDB.COMPREL AUX_C, CZNDB.CODIFYIMP EMPRESA,
+
+    CZNDB.TRASF_SEDE AUX_D, CZNDB.SEDE SEDE,
+
+    CZNDB.NOTEPERS N_COACH, CZNDB.COMPREL M_COACH, CZNDB.ANAGPERS COACH
+
+
+where PERSONA.ID_PERSONA=USUARIO.ID_PERSON and PERSONA.ID_PERSONA=ROL_INT_N.ID_PERSONA and ROL_INT_N.DTA_FINE='31/12/2999' and USUARIO.ID_USERTOKEN=AUX_USUA.ID_USERTOKEN and (AUX_USUA.COD_ROLE='MANAGER75' OR AUX_USUA.COD_ROLE='SELFSRV')
+
+
+    and ROL_INT.COD_RUOLO=ROL_INT_N.COD_RUOLO and PERSONA.ID_PERSONA=AUX_A.ID_PERSONA and PUESTO_ORG.ID_POSTOORG=AUX_A.ID_POSTOORG and UNIDAD.ID_UNITAORG=AUX_A.ID_UNITAORG and ROL_INT.DTA_FINE='31/12/2999'
+
+    and AUX_A.ID_UNITAORG=AUX_B.ID_UNITAORG and AUX_B.COD_AREAATT=PROCESO.COD_AREAATT
+
+    and AUX_C.ID_PERSONA=PERSONA.ID_PERSONA and AUX_C.COD_IMPRESA=EMPRESA.COD_IMPRESA
+
+    and AUX_D.ID_PERSONA=PERSONA.ID_PERSONA and AUX_D.COD_SEDE=SEDE.COD_SEDE
+
+    and N_COACH.ID_PERSONA=PERSONA.ID_PERSONA and M_COACH.COD_MATLIBROMAT like concat('C', N_COACH.COD_TPNOTE) and M_COACH.ID_PERSONA=COACH.ID_PERSONA
+
+
+ORDER BY ROL_INT_N.DTA_FINE DESC, AUX_A.DTA_FINE DESC, AUX_C.DTA_FINE DESC, AUX_D.DTA_FINE DESC, M_COACH.DTA_FINE DESC, USUARIO.COD_USERNAME ASC
