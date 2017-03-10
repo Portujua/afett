@@ -105,7 +105,7 @@
 
         public function extract_proceso($s) {
             $ex = explode(' - ', $s);
-            return count($ex) > 1 ? $ex[1] : $s;
+            return count($ex) > 1 ? $ex[1] : null;
         }
 
         public function actualizar_persona($row)
@@ -113,16 +113,62 @@
             $query = $this->db->prepare("
                 update AR_Persona 
                 set
+                    usuario=:usuario,
                     nombre_completo=:nombre_completo,
-                    trabaja_en=(select id from AR_Sede where nombre=:sede and empresa=(select id from AR_Empresa where nombre=:empresa))
+                    trabaja_en=(select id from AR_Sede where nombre=:sede and empresa=(select id from AR_Empresa where nombre=:empresa)),
+                    unidad=(select id from AR_Unidad where nombre=:unidad and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))),
+                    puesto_organizativo=(select id from AR_Puesto_Organizativo where nombre=:puesto_organizativo and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))),
+                    rol_integral=(select id from AR_Rol_Integral where nombre=:rol_integral and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa)) and subproceso=(select id from AR_Proceso where nombre=:proceso)),
+                    email=:email,
+                    activo=:estado
                 where cedula=:cedula
             ");
 
             $query->execute(array(
+                ":usuario" => $row['usuario'],
+                ":email" => $row['email'],
+                ":estado" => $row['estado'],
                 ":nombre_completo" => $row['nombre_completo'],
+                ":puesto_organizativo" => $row['puesto_organizativo'],
+                ":rol_integral" => $row['rol_integral'],
+                ":unidad" => $row['unidad'],
                 ":sede" => $row['sede'],
                 ":empresa" => $row['empresa'],
                 ":cedula" => $row['cedula'],
+                ":rol" => $this->extract_rol($row['rol_integral']),
+                ":proceso" => $this->extract_proceso($row['rol_integral']),
+            ));
+        }
+
+        public function crear_persona($row)
+        {
+            $query = $this->db->prepare("
+                insert into AR_Persona (usuario, email, activo, nombre_completo, puesto_organizativo, rol_integral, unidad, trabaja_en, cedula)
+                values
+                    (:usuario,
+                    :email,
+                    :estado,
+                    :nombre_completo,
+                    (select id from AR_Puesto_Organizativo where nombre=:puesto_organizativo and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))),
+                    (select id from AR_Rol_Integral where nombre=:rol_integral and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa)) and subproceso=(select id from AR_Proceso where nombre=:proceso)),
+                    (select id from AR_Unidad where nombre=:unidad and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))),
+                    (select id from AR_Sede where nombre=:sede and empresa=(select id from AR_Empresa where nombre=:empresa)),
+                    :cedula)
+            ");
+
+            $query->execute(array(
+                ":usuario" => $row['usuario'],
+                ":email" => $row['email'],
+                ":estado" => $row['estado'],
+                ":nombre_completo" => $row['nombre_completo'],
+                ":puesto_organizativo" => $row['puesto_organizativo'],
+                ":rol_integral" => $row['rol_integral'],
+                ":unidad" => $row['unidad'],
+                ":sede" => $row['sede'],
+                ":empresa" => $row['empresa'],
+                ":cedula" => $row['cedula'],
+                ":rol" => $this->extract_rol($row['rol_integral']),
+                ":proceso" => $this->extract_proceso($row['rol_integral']),
             ));
         }
 
@@ -192,6 +238,20 @@
             return $this->db->lastInsertId();
         }
 
+        public function crear_proceso($row)
+        {
+            $query = $this->db->prepare("
+                insert into AR_Proceso (nombre) 
+                values (:nombre)
+            ");
+
+            $query->execute(array(
+                ":nombre" => $this->extract_proceso($row['rol_integral'])
+            ));
+
+            return $this->db->lastInsertId();
+        }
+
         public function crear_unidad($row)
         {
             if (!$this->check_existencia("nombre", $row['empresa'], "AR_Empresa")) {
@@ -218,6 +278,77 @@
                 ":nombre" => $row['unidad'],
                 ":rol" => $this->extract_rol($row['rol_integral']),
                 ":empresa" => $row['empresa']
+            ));
+
+            return $this->db->lastInsertId();
+        }
+
+        public function crear_puesto_organizativo($row)
+        {
+            if (!$this->check_existencia("nombre", $row['empresa'], "AR_Empresa")) {
+                $this->crear_empresa($row);
+            }
+
+            if (!$this->check_rol($row)) {
+                $this->crear_rol($row);
+            }
+
+            $query = $this->db->prepare("
+                insert into AR_Puesto_Organizativo (nombre, rol) 
+                values (
+                    :nombre, 
+                    (
+                        select id from AR_Rol
+                        where nombre=:rol
+                            and empresa=(select id from AR_Empresa where nombre=:empresa)
+                    )
+                )
+            ");
+
+            $query->execute(array(
+                ":nombre" => $row['puesto_organizativo'],
+                ":rol" => $this->extract_rol($row['rol_integral']),
+                ":empresa" => $row['empresa']
+            ));
+
+            return $this->db->lastInsertId();
+        }
+
+        public function crear_rol_integral($row)
+        {
+            if (!$this->check_existencia("nombre", $row['empresa'], "AR_Empresa")) {
+                $this->crear_empresa($row);
+            }
+
+            if (!$this->check_rol($row)) {
+                $this->crear_rol($row);
+            }
+
+            if (!$this->check_proceso($row)) {
+                $this->crear_proceso($row);
+            }
+
+            $query = $this->db->prepare("
+                insert into AR_Rol_Integral (nombre, rol, subproceso) 
+                values (
+                    :nombre, 
+                    (
+                        select id from AR_Rol
+                        where nombre=:rol
+                            and empresa=(select id from AR_Empresa where nombre=:empresa)
+                    ),
+                    (
+                        select id from AR_Proceso
+                        where nombre=:proceso
+                    )
+                )
+            ");
+
+            $query->execute(array(
+                ":nombre" => $row['rol_integral'],
+                ":rol" => $this->extract_rol($row['rol_integral']),
+                ":empresa" => $row['empresa'],
+                ":proceso" => $this->extract_proceso($row['rol_integral'])
             ));
 
             return $this->db->lastInsertId();
@@ -271,6 +402,56 @@
 
             $query->execute(array(
                 ":rol" => $this->extract_rol($row['rol_integral']),
+                ":empresa" => $row['empresa']
+            ));
+
+            return $query->rowCount() > 0;
+        }
+
+        public function check_proceso($row)
+        {
+            $query = $this->db->prepare("
+                select id from AR_Proceso 
+                where nombre=:proceso
+            ");
+
+            $query->execute(array(
+                ":proceso" => $this->extract_proceso($row['rol_integral'])
+            ));
+
+            return $query->rowCount() > 0 || $this->extract_proceso($row['rol_integral']) == null;
+        }
+
+        public function check_rol_integral($row)
+        {
+            $query = $this->db->prepare("
+                select id from AR_Rol_Integral 
+                where nombre=:rol_integral
+                    and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))
+                    and subproceso=(select id from AR_Proceso where nombre=:proceso)
+            ");
+
+            $query->execute(array(
+                ":rol" => $this->extract_rol($row['rol_integral']),
+                ":proceso" => $this->extract_proceso($row['rol_integral']),
+                ":rol_integral" => $row['rol_integral'],
+                ":empresa" => $row['empresa']
+            ));
+
+            return $query->rowCount() > 0;
+        }
+
+        public function check_puesto_organizativo($row)
+        {
+            $query = $this->db->prepare("
+                select id from AR_Puesto_Organizativo 
+                where nombre=:puesto_organizativo
+                    and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))
+            ");
+
+            $query->execute(array(
+                ":rol" => $this->extract_rol($row['rol_integral']),
+                ":puesto_organizativo" => $row['puesto_organizativo'],
                 ":empresa" => $row['empresa']
             ));
 

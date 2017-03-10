@@ -17,11 +17,12 @@
 #mapPersonas = ['id_persona', 'cedula', 'nombres', 'primer_apellido', 'segundo_apellido', 'email', 'estado', 'usuario', 'rol_integral', 'puesto_organizativo', 'unidad', 'proceso', 'empresa', 'sede', 'coach_cedula', 'coach_nombres', 'coach_primer_apellido', 'coach_segundo_apellido']
 	$dbFields = array(
 		"cedula" => ["campo" => "cedula", "tabla" => "AR_Persona", "pk" => true, "picklist" => false],
-		"usuario" => ["campo" => "usuario", "tabla" => "AR_Persona", "pk" => false, "picklist" => false],
-		"nombre_completo" => ["campo" => "nombre_completo", "tabla" => "AR_Persona", "pk" => false, "picklist" => false],
 		"empresa" => ["campo" => "nombre", "tabla" => "AR_Empresa", "pk" => false, "picklist" => true, "createFn" => "crear_empresa"],
 		"sede" => ["pk" => false, "picklist" => true, "createFn" => "crear_sede", "checkFn" => "check_sede"],
 		"unidad" => ["pk" => false, "picklist" => true, "createFn" => "crear_unidad", "checkFn" => "check_unidad"],
+		"proceso" => ["pk" => false, "picklist" => true, "createFn" => "crear_proceso", "checkFn" => "check_proceso"],
+		"rol_integral" => ["pk" => false, "picklist" => true, "createFn" => "crear_rol_integral", "checkFn" => "check_rol_integral"],
+		"puesto_organizativo" => ["pk" => false, "picklist" => true, "createFn" => "crear_puesto_organizativo", "checkFn" => "check_puesto_organizativo"],
 	);
 
 	$pks = [];
@@ -80,10 +81,12 @@
 			if ($pkExists) {
 				echo $debug ? "<b>'$pkField' con valor '$pk' debe ser actualizado</b><br>" : "";
 				$dbh->actualizar_persona($r);
-				echo $debug ? "<b>'$pkField' con valor '$pk' actualizado con éxito</b><br>" : "";
+				echo "<b>'$pkField' con valor '$pk' actualizado con éxito</b><br>";
 			}
 			else {
 				echo $debug ? "<b>'$pkField' con valor '$pk' debe ser creado</b><br>" : "";
+				$dbh->crear_persona($r);
+				echo "<b>'$pkField' con valor '$pk' creado con éxito</b><br>";
 			}
 		}
 
