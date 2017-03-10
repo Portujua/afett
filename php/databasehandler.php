@@ -118,9 +118,10 @@
                     trabaja_en=(select id from AR_Sede where nombre=:sede and empresa=(select id from AR_Empresa where nombre=:empresa)),
                     unidad=(select id from AR_Unidad where nombre=:unidad and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))),
                     puesto_organizativo=(select id from AR_Puesto_Organizativo where nombre=:puesto_organizativo and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))),
-                    rol_integral=(select id from AR_Rol_Integral where nombre=:rol_integral and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa)) and subproceso=(select id from AR_Proceso where nombre=:proceso)),
+                    rol_integral=(select id from AR_Rol_Integral where nombre=:rol_integral and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa)) and subproceso=(select id from AR_Proceso where nombre=:subproceso)),
                     email=:email,
-                    activo=:estado
+                    activo=:estado,
+                    proceso=:proceso
                 where cedula=:cedula
             ");
 
@@ -128,6 +129,7 @@
                 ":usuario" => $row['usuario'],
                 ":email" => $row['email'],
                 ":estado" => $row['estado'],
+                ":proceso" => $row['proceso'],
                 ":nombre_completo" => $row['nombre_completo'],
                 ":puesto_organizativo" => $row['puesto_organizativo'],
                 ":rol_integral" => $row['rol_integral'],
@@ -136,24 +138,25 @@
                 ":empresa" => $row['empresa'],
                 ":cedula" => $row['cedula'],
                 ":rol" => $this->extract_rol($row['rol_integral']),
-                ":proceso" => $this->extract_proceso($row['rol_integral']),
+                ":subproceso" => $this->extract_proceso($row['rol_integral']),
             ));
         }
 
         public function crear_persona($row)
         {
             $query = $this->db->prepare("
-                insert into AR_Persona (usuario, email, activo, nombre_completo, puesto_organizativo, rol_integral, unidad, trabaja_en, cedula)
+                insert into AR_Persona (usuario, email, activo, nombre_completo, puesto_organizativo, rol_integral, unidad, trabaja_en, cedula, proceso)
                 values
                     (:usuario,
                     :email,
                     :estado,
                     :nombre_completo,
                     (select id from AR_Puesto_Organizativo where nombre=:puesto_organizativo and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))),
-                    (select id from AR_Rol_Integral where nombre=:rol_integral and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa)) and subproceso=(select id from AR_Proceso where nombre=:proceso)),
+                    (select id from AR_Rol_Integral where nombre=:rol_integral and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa)) and subproceso=(select id from AR_Proceso where nombre=:subproceso)),
                     (select id from AR_Unidad where nombre=:unidad and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))),
                     (select id from AR_Sede where nombre=:sede and empresa=(select id from AR_Empresa where nombre=:empresa)),
-                    :cedula)
+                    :cedula,
+                    :proceso)
             ");
 
             $query->execute(array(
@@ -166,9 +169,10 @@
                 ":unidad" => $row['unidad'],
                 ":sede" => $row['sede'],
                 ":empresa" => $row['empresa'],
+                ":proceso" => $row['proceso'],
                 ":cedula" => $row['cedula'],
                 ":rol" => $this->extract_rol($row['rol_integral']),
-                ":proceso" => $this->extract_proceso($row['rol_integral']),
+                ":subproceso" => $this->extract_proceso($row['rol_integral']),
             ));
         }
 
@@ -339,7 +343,7 @@
                     ),
                     (
                         select id from AR_Proceso
-                        where nombre=:proceso
+                        where nombre=:subproceso
                     )
                 )
             ");
@@ -348,7 +352,7 @@
                 ":nombre" => $row['rol_integral'],
                 ":rol" => $this->extract_rol($row['rol_integral']),
                 ":empresa" => $row['empresa'],
-                ":proceso" => $this->extract_proceso($row['rol_integral'])
+                ":subproceso" => $this->extract_proceso($row['rol_integral'])
             ));
 
             return $this->db->lastInsertId();
@@ -412,11 +416,11 @@
         {
             $query = $this->db->prepare("
                 select id from AR_Proceso 
-                where nombre=:proceso
+                where nombre=:subproceso
             ");
 
             $query->execute(array(
-                ":proceso" => $this->extract_proceso($row['rol_integral'])
+                ":subproceso" => $this->extract_proceso($row['rol_integral'])
             ));
 
             return $query->rowCount() > 0 || $this->extract_proceso($row['rol_integral']) == null;
@@ -428,12 +432,12 @@
                 select id from AR_Rol_Integral 
                 where nombre=:rol_integral
                     and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))
-                    and subproceso=(select id from AR_Proceso where nombre=:proceso)
+                    and subproceso=(select id from AR_Proceso where nombre=:subproceso)
             ");
 
             $query->execute(array(
                 ":rol" => $this->extract_rol($row['rol_integral']),
-                ":proceso" => $this->extract_proceso($row['rol_integral']),
+                ":subproceso" => $this->extract_proceso($row['rol_integral']),
                 ":rol_integral" => $row['rol_integral'],
                 ":empresa" => $row['empresa']
             ));
