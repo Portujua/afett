@@ -22,4 +22,4 @@ mapPersonas = ['id_persona', 'cedula', 'nombres', 'primer_apellido', 'segundo_ap
 mapping = ['nombre', 'apellido', 'cedula', 'edad']
 test = [('Eduardo', 'Lorenzo', '21115476', 23), ('Cristina', 'Lozano', '27176391', 19)]
 
-print(parseJSON(test, mapping))
+print(parseJSON(test, mapping)) 
