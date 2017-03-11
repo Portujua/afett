@@ -108,6 +108,22 @@
             return count($ex) > 1 ? $ex[1] : null;
         }
 
+        public function asignar_coach($row) {
+            try {
+                $query = $this->db->prepare("
+                    insert into AR_Persona_Coach (persona, coach, empieza)
+                    values ((select id from AR_Persona where cedula=:persona), (select id from AR_Persona where nombre_completo=:coach), now())
+                ");
+
+                $query->execute(array(
+                    ":persona" => $row['cedula'],
+                    ":coach" => $row['coach_nombre_completo']
+                ));
+            } catch (Exception $ex) {
+                echo isset($_GET['debug']) ? "Coach '".$row['coach_nombre_completo']."' no existe<br>" : "";
+            }
+        }
+
         public function actualizar_persona($row)
         {
             $query = $this->db->prepare("
@@ -121,7 +137,8 @@
                     rol_integral=(select id from AR_Rol_Integral where nombre=:rol_integral and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa)) and subproceso=(select id from AR_Proceso where nombre=:subproceso)),
                     email=:email,
                     activo=:estado,
-                    proceso=:proceso
+                    proceso=:proceso,
+                    id_persona=:id_persona
                 where cedula=:cedula
             ");
 
@@ -130,6 +147,7 @@
                 ":email" => $row['email'],
                 ":estado" => $row['estado'],
                 ":proceso" => $row['proceso'],
+                ":id_persona" => $row['id_persona'],
                 ":nombre_completo" => $row['nombre_completo'],
                 ":puesto_organizativo" => $row['puesto_organizativo'],
                 ":rol_integral" => $row['rol_integral'],
@@ -140,12 +158,14 @@
                 ":rol" => $this->extract_rol($row['rol_integral']),
                 ":subproceso" => $this->extract_proceso($row['rol_integral']),
             ));
+
+            $this->asignar_coach($row);
         }
 
         public function crear_persona($row)
         {
             $query = $this->db->prepare("
-                insert into AR_Persona (usuario, email, activo, nombre_completo, puesto_organizativo, rol_integral, unidad, trabaja_en, cedula, proceso)
+                insert into AR_Persona (usuario, email, activo, nombre_completo, puesto_organizativo, rol_integral, unidad, trabaja_en, cedula, proceso, id_persona)
                 values
                     (:usuario,
                     :email,
@@ -156,12 +176,14 @@
                     (select id from AR_Unidad where nombre=:unidad and rol=(select id from AR_Rol where nombre=:rol and empresa=(select id from AR_Empresa where nombre=:empresa))),
                     (select id from AR_Sede where nombre=:sede and empresa=(select id from AR_Empresa where nombre=:empresa)),
                     :cedula,
-                    :proceso)
+                    :proceso,
+                    :id_persona)
             ");
 
             $query->execute(array(
                 ":usuario" => $row['usuario'],
                 ":email" => $row['email'],
+                ":id_persona" => $row['id_persona'],
                 ":estado" => $row['estado'],
                 ":nombre_completo" => $row['nombre_completo'],
                 ":puesto_organizativo" => $row['puesto_organizativo'],
@@ -174,6 +196,8 @@
                 ":rol" => $this->extract_rol($row['rol_integral']),
                 ":subproceso" => $this->extract_proceso($row['rol_integral']),
             ));
+
+            $this->asignar_coach($row);
         }
 
         public function check_existencia($campo, $valor, $tabla)
