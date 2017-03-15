@@ -382,6 +382,101 @@
             return $this->db->lastInsertId();
         }
 
+        public function crear_resultado($row)
+        {
+            try {
+                $query = $this->db->prepare("
+                    insert into AR_Resultado (modo_de_evaluacion, realizado_por, evaluador, rol_evaluado, rol_evaluador, resultado, peso, resultado_ponderado, ano, competencia, resultado_consolidado, id_resultado, id_valutprest, prg_riga)
+                    values (
+                        :modelo_evaluacion,
+                        (select id from AR_Persona where cedula=:cedula),
+                        (select id from AR_Persona where cedula=:evaluador_cedula),
+                        (select id from AR_Rol_Integral where nombre=:rol_evaluado and rol=(select id from AR_Rol where nombre=:rol and empresa=(select AR_Sede.empresa from AR_Persona, AR_Sede where AR_Persona.trabaja_en=AR_Sede.id and cedula=:cedula))),
+                        :rol_evaluador,
+                        :resultado,
+                        :peso,
+                        :resultado_ponderado,
+                        :ano,
+                        (select id from AR_Competencia where nombre=:competencia),
+                        :resultado_consolidado,
+                        :id_resultado,
+                        :id_valutprest,
+                        :prg_riga)
+                ");
+
+                $query->execute(array(
+                    ":rol" => $this->extract_rol($row['rol_evaluado']),
+                    ":modelo_evaluacion" => $row['modelo_evaluacion'],
+                    ":cedula" => $row['cedula'],
+                    ":evaluador_cedula" => $row['evaluador_cedula'],
+                    ":rol_evaluado" => $row['rol_evaluado'],
+                    ":rol_evaluador" => $row['rol_evaluador'],
+                    ":peso" => $row['peso'],
+                    ":resultado" => $row['resultado'],
+                    ":resultado_ponderado" => $row['resultado_ponderado'],
+                    ":ano" => $row['ano'],
+                    ":competencia" => $row['competencia'],
+                    ":id_resultado" => $row['id_resultado'],
+                    ":id_valutprest" => $row['id_valutprest'],
+                    ":prg_riga" => $row['prg_riga'],
+                    ":resultado_consolidado" => isset($row['resultado_consolidado']) ? $row['resultado_consolidado'] : 0.00,
+                ));
+
+                $rid = $this->db->lastInsertId();
+
+                return $rid;
+            }
+            catch (Exception $ex) {
+                echo "Error añadiendo resultado:<br>";
+                print_r($row);
+                echo "<br>";
+            }
+        }
+
+        public function actualizar_resultados() {
+            $query = $this->db->prepare("
+                select * from AR_Resultado where id_resultado is not null
+            ");
+
+            $query->execute();
+
+            $resultados = $query->fetchAll();
+
+            foreach ($resultados as $r) {
+                $query = $this->db->prepare("
+                    update AR_Resultado 
+                    set
+                        resultado_consolidado=(
+                                select sum(R.suma_actores) as resultado_consolidado
+                                from (select *, sum(resultado.resultado_ponderado) * peso as suma_actores
+                                    from AR_Resultado as resultado
+                                    where resultado.id_resultado=:id_resultado
+                                    group by concat(resultado.id_resultado, '_', resultado.peso)
+                                    order by resultado.id_resultado asc) R
+                                where R.id=:id
+                                group by R.id_resultado
+                        )
+                    where id=:id
+                ");
+
+                $query->execute(array(
+                    ":id_resultado" => $r['id_resultado'],
+                    ":id" => $r['id'],
+                ));
+            }
+
+            $query = $this->db->prepare("
+                update AR_Resultado 
+                set
+                    resultado_consolidado=0.0
+                where resultado_consolidado is null
+            ");
+
+            $query->execute();
+
+            echo isset($_GET['debug']) ? "<strong>Resultados actualizados con éxito</b><br/>" : "";
+        }
+
         public function check_sede($row)
         {
             $query = $this->db->prepare("
@@ -484,6 +579,47 @@
             ));
 
             return $query->rowCount() > 0;
+        }
+
+        public function check_resultado($row)
+        {
+            try {
+                $query = $this->db->prepare("
+                    select id from AR_Resultado
+                    where 
+                        modo_de_evaluacion=:modelo_evaluacion
+                        and realizado_por=(select id from AR_Persona where cedula=:cedula)
+                        and evaluador=(select id from AR_Persona where cedula=:evaluador_cedula)
+                        and rol_evaluado=(select id from AR_Rol_Integral where nombre=:rol_evaluado and rol=(select id from AR_Rol where nombre=:rol and empresa=(select AR_Sede.empresa from AR_Persona, AR_Sede where AR_Persona.trabaja_en=AR_Sede.id and cedula=:cedula)))
+                        and rol_evaluador=:rol_evaluador
+                        and peso=:peso
+                        and resultado=:resultado
+                        and resultado_ponderado=:resultado_ponderado
+                        and ano=:ano
+                        and competencia=(select id from AR_Competencia where nombre=:competencia)
+                ");
+
+                $query->execute(array(
+                    ":rol" => $this->extract_rol($row['rol_evaluado']),
+                    ":modelo_evaluacion" => $row['modelo_evaluacion'],
+                    ":cedula" => $row['cedula'],
+                    ":evaluador_cedula" => $row['evaluador_cedula'],
+                    ":rol_evaluado" => $row['rol_evaluado'],
+                    ":rol_evaluador" => $row['rol_evaluador'],
+                    ":peso" => $row['peso'],
+                    ":resultado" => $row['resultado'],
+                    ":resultado_ponderado" => $row['resultado_ponderado'],
+                    ":ano" => $row['ano'],
+                    ":competencia" => $row['competencia'],
+                ));
+
+                return $query->rowCount() > 0;
+            } catch (Exception $ex) {
+                echo "Error chequeando resultado:<br>";
+                print_r($row);
+                echo "<br>";
+                return false;
+            }
         }
     }
 ?>
