@@ -32,7 +32,7 @@
         $row['resultado_ponderado'] = $row['resultado_pondersdo'];
       }
       
-      if (isset($row['id_valutprest']) && isset($row['resultado_ponderado'])) {
+      if (isset($row['id_valutprest']) && isset($row['prg_riga'])) {
         $row['id_resultado'] = $row['id_valutprest'].','.$row['prg_riga'];
       }
 

@@ -433,6 +433,40 @@
             }
         }
 
+        public function crear_indicadores($row)
+        {
+            try {
+                $query = $this->db->prepare("
+                    insert into AR_Resultado_Indicador (resultado, indicador, autoevaluador, resultado_consolidado, id_resultado)
+                    values (
+                        (select id from AR_Resultado where prg_riga=:prg_riga and id_valutprest=:id_valutprest and competencia=(select id from AR_Competencia where nombre=:competencia)),
+                        (select id from AR_Indicador where codigo=:codigo and descripcion=:descripcion and competencia=(select id from AR_Competencia where nombre=:competencia)),
+                        :resultado_autoevaluador,
+                        :resultado_consolidado,
+                        :id_resultado
+                    )
+                ");
+
+                $query->execute(array(
+                    ":prg_riga" => $row['prg_riga'],
+                    ":id_valutprest" => $row['id_valutprest'],
+                    ":codigo" => $row['me_question'],
+                    ":descripcion" => $row['indicador'],
+                    ":competencia" => $row['competencia'],
+                    ":resultado_autoevaluador" => $row['puntuacion'],
+                    ":resultado_consolidado" => $row['puntuacion'],
+                    ":id_resultado" => $row['id_resultado'],
+                ));
+
+                return $query->rowCount() > 0;
+            } catch (Exception $ex) {
+                echo "Error añadiendo indicador: ".$ex."<br>";
+                print_r($row);
+                echo "<br>";
+                return false;
+            }
+        }
+
         public function actualizar_resultados() {
             $query = $this->db->prepare("
                 select * from AR_Resultado where id_resultado is not null
@@ -616,6 +650,63 @@
                 return $query->rowCount() > 0;
             } catch (Exception $ex) {
                 echo "Error chequeando resultado:<br>";
+                print_r($row);
+                echo "<br>";
+                return false;
+            }
+        }
+
+        public function check_indicadores($row)
+        {
+            try {
+                $query = $this->db->prepare("
+                    select id from AR_Resultado_Indicador
+                    where 
+                        resultado=(select id from AR_Resultado where prg_riga=:prg_riga and id_valutprest=:id_valutprest)
+                        and indicador=(select id from AR_Indicador where codigo=:codigo and descripcion=:descripcion and competencia=(select id from AR_Competencia where nombre=:competencia))
+                        and autoevaluador=:resultado_autoevaluador
+                        and resultado_consolidado=:resultado_consolidado
+                ");
+
+                $query->execute(array(
+                    ":prg_riga" => $row['prg_riga'],
+                    ":id_valutprest" => $row['id_valutprest'],
+                    ":codigo" => $row['me_question'],
+                    ":descripcion" => $row['indicador'],
+                    ":competencia" => $row['competencia'],
+                    ":resultado_autoevaluador" => $row['puntuacion'],
+                    ":resultado_consolidado" => $row['puntuacion'],
+                ));
+
+                return $query->rowCount() > 0;
+            } catch (Exception $ex) {
+                echo "Error chequeando resultado indicador:<br>";
+                print_r($row);
+                echo "<br>";
+                return false;
+            }
+        }
+
+        public function check_indicador($row)
+        {
+            try {
+                $query = $this->db->prepare("
+                    select id from AR_Indicador 
+                    where 
+                        codigo=:codigo 
+                        and descripcion=:descripcion 
+                        and competencia=(select id from AR_Competencia where nombre=:competencia)
+                ");
+
+                $query->execute(array(
+                    ":codigo" => $row['me_question'],
+                    ":descripcion" => $row['indicador'],
+                    ":competencia" => $row['competencia'],
+                ));
+
+                return $query->rowCount() > 0;
+            } catch (Exception $ex) {
+                echo "Error chequeando indicador:<br>";
                 print_r($row);
                 echo "<br>";
                 return false;

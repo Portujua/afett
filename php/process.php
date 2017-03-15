@@ -1,4 +1,7 @@
 <?php
+	ini_set('memory_limit', '-1');
+	ini_set('max_execution_time', 10800);
+
 	include_once('utils.php');
 	include_once('databasehandler.php');
 
@@ -20,7 +23,7 @@
 	}
 
 	$fc = readFileContent("../export/{$_GET['a']}");
-	$arr = convertToArray($fc);
+	$arr = convertToArray($fc); 
 
 	// $dbFields = array(
 	// 	"cedula" => ["campo" => "cedula", "tabla" => "AR_Persona", "pk" => true, "picklist" => false],
@@ -32,8 +35,13 @@
 	// 	"puesto_organizativo" => ["pk" => false, "picklist" => true, "createFn" => "crear_puesto_organizativo", "checkFn" => "check_puesto_organizativo"],
 	// );
 
+	// $dbFields = array(
+	// 	"id_resultado" => ["pk" => true, "tabla" => "AR_Resultado", "campo" => "id_resultado", "picklist" => true, "createFn" => "crear_resultado", "checkFn" => "check_resultado"],
+	// );
+
 	$dbFields = array(
-		"id_resultado" => ["pk" => true, "tabla" => "AR_Resultado", "campo" => "id_resultado", "picklist" => true, "createFn" => "crear_resultado", "checkFn" => "check_resultado"],
+		"indicador" => ["pk" => false, "picklist" => true, "checkFn" => "check_indicador"],
+		"id_resultado" => ["pk" => true, "tabla" => "AR_Resultado_Indicador", "campo" => "id_resultado", "picklist" => true, "createFn" => "crear_indicadores", "checkFn" => "check_indicadores"],
 	);
 
 	$pks = [];
