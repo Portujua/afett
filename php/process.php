@@ -22,27 +22,37 @@
 		die();
 	}
 
-	$fc = readFileContent("../export/{$_GET['a']}");
+	$fc = readFileContent("../upload/{$_GET['a']}");
 	$arr = convertToArray($fc); 
 
-	// $dbFields = array(
-	// 	"cedula" => ["campo" => "cedula", "tabla" => "AR_Persona", "pk" => true, "picklist" => false],
-	// 	"empresa" => ["campo" => "nombre", "tabla" => "AR_Empresa", "pk" => false, "picklist" => true, "createFn" => "crear_empresa"],
-	// 	"sede" => ["pk" => false, "picklist" => true, "createFn" => "crear_sede", "checkFn" => "check_sede"],
-	// 	"unidad" => ["pk" => false, "picklist" => true, "createFn" => "crear_unidad", "checkFn" => "check_unidad"],
-	// 	"proceso" => ["pk" => false, "picklist" => true, "createFn" => "crear_proceso", "checkFn" => "check_proceso"],
-	// 	"rol_integral" => ["pk" => false, "picklist" => true, "createFn" => "crear_rol_integral", "checkFn" => "check_rol_integral"],
-	// 	"puesto_organizativo" => ["pk" => false, "picklist" => true, "createFn" => "crear_puesto_organizativo", "checkFn" => "check_puesto_organizativo"],
-	// );
+	$dbFields = [];
 
-	// $dbFields = array(
-	// 	"id_resultado" => ["pk" => true, "tabla" => "AR_Resultado", "campo" => "id_resultado", "picklist" => true, "createFn" => "crear_resultado", "checkFn" => "check_resultado"],
-	// );
-
-	$dbFields = array(
-		"indicador" => ["pk" => false, "picklist" => true, "checkFn" => "check_indicador"],
-		"id_resultado" => ["pk" => true, "tabla" => "AR_Resultado_Indicador", "campo" => "id_resultado", "picklist" => true, "createFn" => "crear_indicadores", "checkFn" => "check_indicadores"],
-	);
+	if ($_GET['a'] == 'personas') {
+		$dbFields = array(
+			"cedula" => ["campo" => "cedula", "tabla" => "AR_Persona", "pk" => true, "picklist" => false],
+			"empresa" => ["campo" => "nombre", "tabla" => "AR_Empresa", "pk" => false, "picklist" => true, "createFn" => "crear_empresa"],
+			"sede" => ["pk" => false, "picklist" => true, "createFn" => "crear_sede", "checkFn" => "check_sede"],
+			"unidad" => ["pk" => false, "picklist" => true, "createFn" => "crear_unidad", "checkFn" => "check_unidad"],
+			"proceso" => ["pk" => false, "picklist" => true, "createFn" => "crear_proceso", "checkFn" => "check_proceso"],
+			"rol_integral" => ["pk" => false, "picklist" => true, "createFn" => "crear_rol_integral", "checkFn" => "check_rol_integral"],
+			"puesto_organizativo" => ["pk" => false, "picklist" => true, "createFn" => "crear_puesto_organizativo", "checkFn" => "check_puesto_organizativo"],
+		);
+	}
+	elseif ($_GET['a'] == 'resultados') {
+		$dbFields = array(
+			"id_resultado" => ["pk" => true, "tabla" => "AR_Resultado", "campo" => "id_resultado", "picklist" => true, "createFn" => "crear_resultado", "checkFn" => "check_resultado"],
+		);
+	}
+	elseif ($_GET['a'] == 'indicadores') {
+		$dbFields = array(
+			"indicador" => ["pk" => false, "picklist" => true, "checkFn" => "check_indicador"],
+			"id_resultado" => ["pk" => true, "tabla" => "AR_Resultado_Indicador", "campo" => "id_resultado", "picklist" => true, "createFn" => "crear_indicadores", "checkFn" => "check_indicadores"],
+		);
+	}
+	else {
+		echo "Archivo no válido.";
+		die();
+	}
 
 	$pks = [];
 
