@@ -6,7 +6,7 @@
         */
 
         // local, main, test
-        private $connect_to = "local";
+        private $connect_to = "test";
 
         private $db;
 
@@ -477,24 +477,58 @@
             $resultados = $query->fetchAll();
 
             foreach ($resultados as $r) {
+                echo "------------------------------<br>";
+                echo "------------------------------<br>";
+                print_r($r);
+                echo "<br>";
+
+                $query = $this->db->prepare("
+                    select sum(resultado.resultado) as suma, resultado.peso as peso, resultado.modo_de_evaluacion
+                    from AR_Resultado as resultado
+                    where resultado.competencia=:competencia and resultado.evaluador=:evaluador and ano=:ano and modo_de_evaluacion=:modo_de_evaluacion
+                    group by concat(resultado.competencia, '_', resultado.evaluador, '_', resultado.ano, '_', resultado.peso)
+                ");
+
+                $query->execute(array(
+                    ":competencia" => $r['competencia'],
+                    ":ano" => $r['ano'],
+                    ":evaluador" => $r['evaluador'],
+                    ":modo_de_evaluacion" => $r['modo_de_evaluacion']
+                ));
+
+                $vals = $query->fetchAll();
+
+                $consolidado = 0.00;
+
+                echo "Modo de evaluacion: ".$r['modo_de_evaluacion']."<br>";
+
+                foreach ($vals as $v) {
+                    if ($v['modo_de_evaluacion'] == '180') {
+                        if ($v['peso'] == '0.25' || $v['peso'] == '0.75') {
+                            echo floatval($v['suma']) . " x " . floatval($v['peso']) . " = " . floatval($v['suma']) * floatval($v['peso']) . "<br>";
+                            $consolidado += floatval($v['suma']) * floatval($v['peso']);
+                        }
+                    }
+
+                    if ($v['modo_de_evaluacion'] == '360') {
+                        if ($v['peso'] == '0.25' || $v['peso'] == '0.35' || $v['peso'] == '0.4') {
+                            echo floatval($v['suma']) . " x " . floatval($v['peso']) . " = " . floatval($v['suma']) * floatval($v['peso']) . "<br>";
+                            $consolidado += floatval($v['suma']) * floatval($v['peso']);
+                        }
+                    }
+                }
+
+                echo "Consolidado: $consolidado <br>";
+
                 $query = $this->db->prepare("
                     update AR_Resultado 
                     set
-                        resultado_consolidado=(
-                                select sum(R.suma_actores) as resultado_consolidado
-                                from (select *, sum(resultado.resultado_ponderado) * peso as suma_actores
-                                    from AR_Resultado as resultado
-                                    where resultado.id_resultado=:id_resultado
-                                    group by concat(resultado.id_resultado, '_', resultado.peso)
-                                    order by resultado.id_resultado asc) R
-                                where R.id=:id
-                                group by R.id_resultado
-                        )
+                        resultado_consolidado=:consolidado
                     where id=:id
                 ");
 
                 $query->execute(array(
-                    ":id_resultado" => $r['id_resultado'],
+                    ":consolidado" => $consolidado,
                     ":id" => $r['id'],
                 ));
             }

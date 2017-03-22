@@ -55,8 +55,39 @@
 	}
 
 	$pks = [];
+	$i = 0;
 
 	foreach ($arr as $r) {
+		$i++;
+
+		// Solo poara resultados
+		if ($_GET['a'] == 'resultados') {
+			if (!$dbh->check_resultado($r)) {
+				$dbh->crear_resultado($r);
+			}
+
+			continue;
+		}
+
+		if (isset($_GET['max'])) {
+			if ($i > intval($_GET['max']) * (isset($_GET['p']) ? intval($_GET['p']) + 1 : 1)) {
+				echo $debug ? "Proceso terminado. Registro maximo alcanzado $i de " . (intval($_GET['max']) * (isset($_GET['p']) ? intval($_GET['p']) : 1)) . "<br>" : "";
+				break;
+			}
+		}
+
+		if (isset($_GET['p']) && isset($_GET['max'])) {
+			if ($i <= (isset($_GET['p']) ? intval($_GET['p']) : 1) * intval($_GET['max'])) {
+				echo $debug ? "Saltando registro $i hasta llegar a " . ((isset($_GET['p']) ? intval($_GET['p']) : 1) * intval($_GET['max'])) . "<br>" : "";
+				continue;
+			}
+
+			if ($i > (isset($_GET['p']) ? intval($_GET['p']) + 1 : 1) * intval($_GET['max'])) {
+				echo $debug ? "Proceso terminado. Se alcanzó el registro $i de " . ($i * intval($_GET['p'])) . "<br>" : "";
+				break;
+			}
+		}
+
 		if (count($r) == 0) {
 			continue;
 		}
@@ -84,7 +115,7 @@
 		}
 
 		if (!in_array($pk, $pks)) {
-			$pks[] = $pk;
+			//$pks[] = $pk;
 
 			foreach ($r as $k => $v) {
 				if (array_key_exists($k, $dbFields)) {
