@@ -389,9 +389,9 @@
                     insert into AR_Resultado (modo_de_evaluacion, realizado_por, evaluador, rol_evaluado, rol_evaluador, resultado, peso, resultado_ponderado, ano, competencia, resultado_consolidado, id_resultado, id_valutprest, prg_riga)
                     values (
                         :modelo_evaluacion,
-                        (select id from AR_Persona where cedula=:cedula),
                         (select id from AR_Persona where cedula=:evaluador_cedula),
-                        (select id from AR_Rol_Integral where nombre=:rol_evaluado and rol=(select id from AR_Rol where nombre=:rol and empresa=(select AR_Sede.empresa from AR_Persona, AR_Sede where AR_Persona.trabaja_en=AR_Sede.id and cedula=:cedula))),
+                        (select id from AR_Persona where cedula=:cedula),
+                        (select id from AR_Rol_Integral where nombre=:rol_evaluado and rol=(select id from AR_Rol where nombre=:rol and empresa=(select AR_Sede.empresa from AR_Persona, AR_Sede where AR_Persona.trabaja_en=AR_Sede.id and cedula=:cedula)) limit 1),
                         :rol_evaluador,
                         :resultado,
                         :peso,
@@ -427,7 +427,7 @@
                 return $rid;
             }
             catch (Exception $ex) {
-                echo "Error añadiendo resultado:<br>";
+                echo "Error añadiendo resultado:<br>" . $ex->getMessage() . "<br>";
                 print_r($row);
                 echo "<br>";
             }
@@ -483,7 +483,7 @@
                 echo "<br>";
 
                 $query = $this->db->prepare("
-                    select sum(resultado.resultado) as suma, resultado.peso as peso, resultado.modo_de_evaluacion
+                    select avg(resultado.resultado) as suma, resultado.peso as peso, resultado.modo_de_evaluacion
                     from AR_Resultado as resultado
                     where resultado.competencia=:competencia and resultado.evaluador=:evaluador and ano=:ano and modo_de_evaluacion=:modo_de_evaluacion
                     group by concat(resultado.competencia, '_', resultado.evaluador, '_', resultado.ano, '_', resultado.peso)
@@ -658,7 +658,7 @@
                         modo_de_evaluacion=:modelo_evaluacion
                         and realizado_por=(select id from AR_Persona where cedula=:cedula)
                         and evaluador=(select id from AR_Persona where cedula=:evaluador_cedula)
-                        and rol_evaluado=(select id from AR_Rol_Integral where nombre=:rol_evaluado and rol=(select id from AR_Rol where nombre=:rol and empresa=(select AR_Sede.empresa from AR_Persona, AR_Sede where AR_Persona.trabaja_en=AR_Sede.id and cedula=:cedula)))
+                        and rol_evaluado=(select id from AR_Rol_Integral where nombre=:rol_evaluado and rol=(select id from AR_Rol where nombre=:rol and empresa=(select AR_Sede.empresa from AR_Persona, AR_Sede where AR_Persona.trabaja_en=AR_Sede.id and cedula=:cedula)) limit 1)
                         and rol_evaluador=:rol_evaluador
                         and peso=:peso
                         and resultado=:resultado
