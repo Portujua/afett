@@ -72,6 +72,10 @@
 		if (isset($_GET['max'])) {
 			if ($i > intval($_GET['max']) * (isset($_GET['p']) ? intval($_GET['p']) + 1 : 1)) {
 				echo $debug ? "Proceso terminado. Registro maximo alcanzado $i de " . (intval($_GET['max']) * (isset($_GET['p']) ? intval($_GET['p']) : 1)) . "<br>" : "";
+				echo "Redirigiendo en 3 segundos para seguir procesando..<br>";
+				echo "
+					<script> setTimeout(() => { window.location = '".getNextUrl()."' }, 3000)  </script>
+				";
 				break;
 			}
 		}

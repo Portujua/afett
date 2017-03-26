@@ -45,4 +45,24 @@
 
   	return $arr;
   }
+
+  function getNextUrl($p = 'p') {
+    $link = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+
+    $url_ = explode('?', $link);
+
+    if (count($url_) > 1) {
+      $var_str = explode('&', $url_[1]);
+
+      foreach ($var_str as $vs) {
+        $arr = explode('=', $vs);
+
+        if ($arr[0] == $p) {
+          $link = str_replace($vs, $p."=".(intval($arr[1]) + 1), $link);
+        }
+      }
+    }
+
+    return $link;
+  }
 ?>
