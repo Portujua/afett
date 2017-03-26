@@ -72,10 +72,13 @@
 		if (isset($_GET['max'])) {
 			if ($i > intval($_GET['max']) * (isset($_GET['p']) ? intval($_GET['p']) + 1 : 1)) {
 				echo $debug ? "Proceso terminado. Registro maximo alcanzado $i de " . (intval($_GET['max']) * (isset($_GET['p']) ? intval($_GET['p']) : 1)) . "<br>" : "";
-				echo "Redirigiendo en 3 segundos para seguir procesando..<br>";
-				echo "
-					<script> setTimeout(() => { window.location = '".getNextUrl()."' }, 3000)  </script>
-				";
+
+				if (!isset($_GET['noAutoJump'])) {
+					echo "Redirigiendo en 3 segundos para seguir procesando..<br>";
+					echo "
+						<script> setTimeout(() => { window.location = '".getNextUrl()."' }, 3000)  </script>
+					";
+				}
 				break;
 			}
 		}
@@ -163,5 +166,19 @@
 		}
 
 		echo $debug ? "<br>" : "";
+	}
+
+	if ($_GET['a'] == "personas" && !isset($_GET['actCoaches'])) {
+		echo "Redirigiendo en 3 segundos para procesar los coaches..<br>";
+		echo "
+			<script> setTimeout(() => { window.location = '".getUrl()."&actCoaches' }, 3000)  </script>
+		";
+	}
+
+	if ($_GET['a'] == "resultados" && !isset($_GET['soloAct'])) {
+		echo "Redirigiendo en 3 segundos para generar los resultados consolidados..<br>";
+		echo "
+			<script> setTimeout(() => { window.location = '".getUrl()."&soloAct' }, 3000)  </script>
+		";
 	}
 ?>

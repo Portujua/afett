@@ -46,6 +46,10 @@
   	return $arr;
   }
 
+  function getUrl() {
+    return 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+  }
+
   function getNextUrl($p = 'p') {
     $link = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 

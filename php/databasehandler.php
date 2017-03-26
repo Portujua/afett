@@ -6,7 +6,7 @@
         */
 
         // local, main, test
-        private $connect_to = "test";
+        private $connect_to = "local";
 
         private $db;
 
@@ -439,7 +439,7 @@
                 $query = $this->db->prepare("
                     insert into AR_Resultado_Indicador (resultado, indicador, autoevaluador, resultado_consolidado, id_resultado)
                     values (
-                        (select id from AR_Resultado where prg_riga=:prg_riga and id_valutprest=:id_valutprest and competencia=(select id from AR_Competencia where nombre=:competencia)),
+                        (select id from AR_Resultado where rol_evaluador='Autoevaluador' and competencia=(select id from AR_Competencia where nombre=:competencia) and prg_riga=:prg_riga and id_valutprest=:id_valutprest),
                         (select id from AR_Indicador where codigo=:codigo and descripcion=:descripcion and competencia=(select id from AR_Competencia where nombre=:competencia)),
                         :resultado_autoevaluador,
                         :resultado_consolidado,
@@ -656,8 +656,8 @@
                     select id from AR_Resultado
                     where 
                         modo_de_evaluacion=:modelo_evaluacion
-                        and realizado_por=(select id from AR_Persona where cedula=:cedula)
-                        and evaluador=(select id from AR_Persona where cedula=:evaluador_cedula)
+                        and realizado_por=(select id from AR_Persona where cedula=:evaluador_cedula)
+                        and evaluador=(select id from AR_Persona where cedula=:cedula)
                         and rol_evaluado=(select id from AR_Rol_Integral where nombre=:rol_evaluado and rol=(select id from AR_Rol where nombre=:rol and empresa=(select AR_Sede.empresa from AR_Persona, AR_Sede where AR_Persona.trabaja_en=AR_Sede.id and cedula=:cedula)) limit 1)
                         and rol_evaluador=:rol_evaluador
                         and peso=:peso
@@ -696,8 +696,8 @@
                 $query = $this->db->prepare("
                     select id from AR_Resultado_Indicador
                     where 
-                        resultado=(select id from AR_Resultado where prg_riga=:prg_riga and id_valutprest=:id_valutprest)
-                        and indicador=(select id from AR_Indicador where codigo=:codigo and descripcion=:descripcion and competencia=(select id from AR_Competencia where nombre=:competencia))
+                        resultado=(select id from AR_Resultado where rol_evaluador='Autoevaluador' and competencia=(select id from AR_Competencia where nombre=:competencia) and prg_riga=:prg_riga and id_valutprest=:id_valutprest)
+                        and indicador=(select id from AR_Indicador where codigo=:codigo and descripcion=:descripcion and competencia=(select id from AR_Competencia where nombre=:competencia) limit 1)
                         and autoevaluador=:resultado_autoevaluador
                         and resultado_consolidado=:resultado_consolidado
                 ");
@@ -714,9 +714,11 @@
 
                 return $query->rowCount() > 0;
             } catch (Exception $ex) {
-                echo "Error chequeando resultado indicador:<br>";
-                print_r($row);
-                echo "<br>";
+                if (isset($_GET['debug'])) {
+                    echo "Error chequeando resultado indicador:<br>";
+                    print_r($row);
+                    echo "<br>";
+                }
                 return false;
             }
         }
