@@ -40,6 +40,26 @@
         $row['evaluador_nombre_completo'] = $row['evaluador_nombres'] . (strlen($row['evaluador_primer_apellido']) > 0 ? " ".$row['evaluador_primer_apellido'] : "") . (strlen($row['evaluador_segundo_apellido']) > 0 ? " ".$row['evaluador_segundo_apellido'] : "");
       }
 
+      if (isset($row['tipo_evaluador'])) {
+        $row['campo_resultado'] = "";
+
+        if ($row['tipo_evaluador'] == "Autoevaluador") {
+          $row['campo_resultado'] = "autoevaluador";
+        }
+
+        if ($row['tipo_evaluador'] == "Coach") {
+          $row['campo_resultado'] = "coach";
+        }
+
+        if ($row['tipo_evaluador'] == "Coach 360") {
+          $row['campo_resultado'] = "coach_360";
+        }
+
+        if ($row['tipo_evaluador'] == "Colaborador") {
+          $row['campo_resultado'] = "colaborador";
+        }
+      }
+
   		$arr[] = $row;
   	}
 
@@ -68,5 +88,12 @@
     }
 
     return $link;
+  }
+
+  function redirect() {
+    echo "Redirigiendo en 3 segundos a la pagina principal..<br>";
+    echo "
+      <script> setTimeout(() => { window.location = '../?completado=".$_GET['a']."' }, 3000)  </script>
+    ";
   }
 ?>

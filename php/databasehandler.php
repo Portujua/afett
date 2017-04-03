@@ -437,12 +437,11 @@
         {
             try {
                 $query = $this->db->prepare("
-                    insert into AR_Resultado_Indicador (resultado, indicador, autoevaluador, resultado_consolidado, id_resultado)
+                    insert into AR_Resultado_Indicador (resultado, indicador, ".$row['campo_resultado'].", id_resultado)
                     values (
-                        (select id from AR_Resultado where rol_evaluador='Autoevaluador' and competencia=(select id from AR_Competencia where nombre=:competencia) and prg_riga=:prg_riga and id_valutprest=:id_valutprest),
+                        (select id from AR_Resultado where rol_evaluador=:tipo_evaluador and competencia=(select id from AR_Competencia where nombre=:competencia) and prg_riga=:prg_riga and id_valutprest=:id_valutprest),
                         (select id from AR_Indicador where codigo=:codigo and descripcion=:descripcion and competencia=(select id from AR_Competencia where nombre=:competencia)),
-                        :resultado_autoevaluador,
-                        :resultado_consolidado,
+                        :puntuacion,
                         :id_resultado
                     )
                 ");
@@ -453,9 +452,9 @@
                     ":codigo" => $row['me_question'],
                     ":descripcion" => $row['indicador'],
                     ":competencia" => $row['competencia'],
-                    ":resultado_autoevaluador" => $row['puntuacion'],
-                    ":resultado_consolidado" => $row['puntuacion'],
+                    ":puntuacion" => $row['puntuacion'],
                     ":id_resultado" => $row['id_resultado'],
+                    ":tipo_evaluador" => $row['tipo_evaluador'],
                 ));
 
                 return $query->rowCount() > 0;
@@ -543,6 +542,117 @@
             $query->execute();
 
             echo isset($_GET['debug']) ? "<strong>Resultados actualizados con éxito</b><br/>" : "";
+        }
+
+        public function actualizar_indicadores() {
+            $query = $this->db->prepare("
+                select  
+                    ri.id as riid,
+                    r.id as rid,
+                    ri.id_resultado as id_resultado, 
+                    ri.indicador as indicador,
+                    r.peso as peso,
+                    r.modo_de_evaluacion as modo_de_evaluacion
+                from AR_Resultado_Indicador as ri, AR_Resultado as r
+                where 
+                    ri.resultado=r.id
+                    and ri.id_resultado is not null
+                group by concat(ri.id_resultado, ri.indicador)
+            ");
+
+            $query->execute();
+
+            $resultados = $query->fetchAll();
+
+            foreach ($resultados as $r) {
+                echo "------------------------------<br>";
+                echo "------------------------------<br>";
+                print_r($r);
+                echo "<br>";
+
+                $query = $this->db->prepare("
+                    select 
+                        avg(resultado.autoevaluador) as suma_autoevaluador, 
+                        avg(resultado.coach) as suma_coach,
+                        avg(resultado.coach_360) as suma_coach_360,
+                        avg(resultado.colaborador) as suma_colaborador,
+                        resultado.indicador as indicador
+                    from AR_Resultado_Indicador as resultado
+                    where resultado.id_resultado=:id_resultado and resultado.indicador=:indicador
+                    group by concat(resultado.indicador, '_', resultado.id_resultado)
+                ");
+
+                $query->execute(array(
+                    ":id_resultado" => $r['id_resultado'],
+                    ":indicador" => $r['indicador'],
+                ));
+
+                $vals = $query->fetchAll();
+
+                $consolidado = 0.00;
+
+                if (count($vals) > 1) {
+                    echo "AQUIIIIIIIIIII";
+                }
+
+                foreach ($vals as $v) {
+                    if ($r['modo_de_evaluacion'] == '180') {
+                        if ($r['peso'] == '0.25' || $r['peso'] == '0.75') {
+                            echo "<table>";
+
+                            echo "<tr><td>Autoevaluador: </td><td>" . floatval($v['suma_autoevaluador']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_autoevaluador']) * floatval($r['peso']) . "</td></tr>";
+                            $consolidado += floatval($v['suma_autoevaluador']) * floatval($r['peso']);
+
+                            echo "<tr><td>Coach: </td><td>" . floatval($v['suma_coach']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_coach']) * floatval($r['peso']) . "</td></tr>";
+                            $consolidado += floatval($v['suma_coach']) * floatval($r['peso']);
+
+                            echo "</table>";
+                        }
+                    }
+
+                    if ($r['modo_de_evaluacion'] == '360') {
+                        if ($r['peso'] == '0.25' || $r['peso'] == '0.35' || $r['peso'] == '0.4') {
+                            echo "<table>";
+
+                            echo "<tr><td>Autoevaluador: </td><td>" . floatval($v['suma_autoevaluador']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_autoevaluador']) * floatval($r['peso']) . "</td></tr>";
+                            $consolidado += floatval($v['suma_autoevaluador']) * floatval($r['peso']);
+                            
+                            echo "<tr><td>Colaborador: </td><td>" . floatval($v['suma_colaborador']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_colaborador']) * floatval($r['peso']) . "</td></tr>";
+                            $consolidado += floatval($v['suma_colaborador']) * floatval($r['peso']);
+                            
+                            echo "<tr><td>Coach 360: </td><td>" . floatval($v['suma_coach_360']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_coach_360']) * floatval($r['peso']) . "</td></tr>";
+                            $consolidado += floatval($v['suma_coach_360']) * floatval($r['peso']);
+
+                            echo "</table>";
+                        }
+                    }
+                }
+
+                echo "<b>Consolidado: $consolidado </b><br>";
+
+                $query = $this->db->prepare("
+                    update AR_Resultado_Indicador 
+                    set
+                        resultado_consolidado=:consolidado
+                    where id=:id
+                ");
+
+                $query->execute(array(
+                    ":consolidado" => $consolidado,
+                    ":id" => $r['riid'],
+                ));
+            }
+
+            $query = $this->db->prepare("
+                update AR_Resultado_Indicador
+                set
+                    resultado_consolidado=0.0
+                where resultado_consolidado is null
+            ");
+
+            $query->execute();
+
+            echo isset($_GET['debug']) ? "<strong>Indicadores actualizados con éxito</b><br/>" : "";
         }
 
         public function check_sede($row)
@@ -696,10 +806,9 @@
                 $query = $this->db->prepare("
                     select id from AR_Resultado_Indicador
                     where 
-                        resultado=(select id from AR_Resultado where rol_evaluador='Autoevaluador' and competencia=(select id from AR_Competencia where nombre=:competencia) and prg_riga=:prg_riga and id_valutprest=:id_valutprest)
+                        resultado=(select id from AR_Resultado where rol_evaluador=:tipo_evaluador and competencia=(select id from AR_Competencia where nombre=:competencia) and prg_riga=:prg_riga and id_valutprest=:id_valutprest)
                         and indicador=(select id from AR_Indicador where codigo=:codigo and descripcion=:descripcion and competencia=(select id from AR_Competencia where nombre=:competencia) limit 1)
-                        and autoevaluador=:resultado_autoevaluador
-                        and resultado_consolidado=:resultado_consolidado
+                        and ".$row['campo_resultado']."=:puntuacion
                 ");
 
                 $query->execute(array(
@@ -708,8 +817,8 @@
                     ":codigo" => $row['me_question'],
                     ":descripcion" => $row['indicador'],
                     ":competencia" => $row['competencia'],
-                    ":resultado_autoevaluador" => $row['puntuacion'],
-                    ":resultado_consolidado" => $row['puntuacion'],
+                    ":puntuacion" => $row['puntuacion'],
+                    ":tipo_evaluador" => $row['tipo_evaluador'],
                 ));
 
                 return $query->rowCount() > 0;

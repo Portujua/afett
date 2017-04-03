@@ -15,10 +15,11 @@
 	}
 
 	if (isset($_GET['soloAct'])) {
-		if ($_GET['a'] == 'resultados') {
-			$dbh->actualizar_resultados();
-		}
+		$fn = "actualizar_".$_GET['a'];
+		$dbh->$fn();
 
+		if (!isset($_GET['noRedirect']))
+			redirect();
 		die();
 	}
 
@@ -60,15 +61,6 @@
 	foreach ($arr as $r) {
 		$i++;
 
-		// Solo poara resultados
-		if ($_GET['a'] == 'resultados') {
-			if (!$dbh->check_resultado($r)) {
-				$dbh->crear_resultado($r);
-			}
-
-			continue;
-		}
-
 		if (isset($_GET['max'])) {
 			if ($i > intval($_GET['max']) * (isset($_GET['p']) ? intval($_GET['p']) + 1 : 1)) {
 				echo $debug ? "Proceso terminado. Registro maximo alcanzado $i de " . (intval($_GET['max']) * (isset($_GET['p']) ? intval($_GET['p']) : 1)) . "<br>" : "";
@@ -79,7 +71,8 @@
 						<script> setTimeout(() => { window.location = '".getNextUrl()."' }, 3000)  </script>
 					";
 				}
-				break;
+
+				die();
 			}
 		}
 
@@ -96,6 +89,15 @@
 		}
 
 		if (count($r) == 0) {
+			continue;
+		}
+
+		// Solo poara resultados
+		if ($_GET['a'] == 'resultados') {
+			if (!$dbh->check_resultado($r)) {
+				$dbh->crear_resultado($r);
+			}
+
 			continue;
 		}
 
@@ -173,12 +175,19 @@
 		echo "
 			<script> setTimeout(() => { window.location = '".getUrl()."&actCoaches' }, 3000)  </script>
 		";
+
+		die();
 	}
 
-	if ($_GET['a'] == "resultados" && !isset($_GET['soloAct'])) {
+	if (($_GET['a'] == "resultados" || $_GET['a'] == "indicadores") && !isset($_GET['soloAct'])) {
 		echo "Redirigiendo en 3 segundos para generar los resultados consolidados..<br>";
 		echo "
 			<script> setTimeout(() => { window.location = '".getUrl()."&soloAct' }, 3000)  </script>
 		";
+
+		die();
 	}
+
+	if (!isset($_GET['noRedirect']))
+		redirect();
 ?>
