@@ -13,15 +13,15 @@
 	<?php endif; ?>
 
 	<div class="btn-group">
-		<a href="php/process.php?a=personas&debug" class="btn btn-default">
+		<a href="php/process.php?a=personas" class="btn btn-default">
 			Procesar Maestro <br>
 			<small>(duración aprox. 1 min.)</small>
 		</a>
-		<a href="php/process.php?a=resultados&debug" class="btn btn-default">
+		<a href="php/process.php?a=resultados" class="btn btn-default">
 			Procesar Resultados <br>
 			<small>(duración aprox. 3 min.)</small>
 		</a>
-		<a href="php/process.php?a=indicadores&debug&max=10000&p=0" class="btn btn-default">
+		<a href="php/process.php?a=indicadores&max=2500&p=0" class="btn btn-default">
 			Procesar Indicadores <br>
 			<small>(duración aprox. 4 hrs.)</small>
 		</a>

@@ -6,7 +6,7 @@
         */
 
         // local, main, test
-        private $connect_to = "local";
+        private $connect_to = "main";
 
         private $db;
 
@@ -20,9 +20,9 @@
             }
             elseif ($this->connect_to == "main")
             {
-                $this->username = "eidoscon_root";
+                $this->username = "arreporte";
                 $this->password = "-*[!5ReLVFZ6ykN1%,";
-                $this->dsn = "mysql:dbname=eidoscon_arreporte;host=localhost";
+                $this->dsn = "mysql:dbname=arreporte;host=localhost";
             }
             elseif ($this->connect_to == "test")
             {
@@ -459,9 +459,11 @@
 
                 return $query->rowCount() > 0;
             } catch (Exception $ex) {
-                echo "Error añadiendo indicador: ".$ex."<br>";
-                print_r($row);
-                echo "<br>";
+                if (isset($_GET['debug'])) {
+                    echo "Error añadiendo indicador: ".$ex."<br>";
+                    print_r($row);
+                    echo "<br>";
+                }
                 return false;
             }
         }
@@ -565,10 +567,12 @@
             $resultados = $query->fetchAll();
 
             foreach ($resultados as $r) {
-                echo "------------------------------<br>";
-                echo "------------------------------<br>";
-                print_r($r);
-                echo "<br>";
+                if (isset($_GET['debug'])) {
+                    echo "------------------------------<br>";
+                    echo "------------------------------<br>";
+                    print_r($r);
+                    echo "<br>";
+                }
 
                 $query = $this->db->prepare("
                     select 
@@ -598,37 +602,40 @@
                 foreach ($vals as $v) {
                     if ($r['modo_de_evaluacion'] == '180') {
                         if ($r['peso'] == '0.25' || $r['peso'] == '0.75') {
-                            echo "<table>";
+                            if (isset($_GET['debug'])) {
+                                echo "<table>";
 
-                            echo "<tr><td>Autoevaluador: </td><td>" . floatval($v['suma_autoevaluador']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_autoevaluador']) * floatval($r['peso']) . "</td></tr>";
+                                echo "<tr><td>Autoevaluador: </td><td>" . floatval($v['suma_autoevaluador']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_autoevaluador']) * floatval($r['peso']) . "</td></tr>";
+                                echo "<tr><td>Coach: </td><td>" . floatval($v['suma_coach']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_coach']) * floatval($r['peso']) . "</td></tr>";
+                                echo "</table>";
+                            }
+                            
                             $consolidado += floatval($v['suma_autoevaluador']) * floatval($r['peso']);
-
-                            echo "<tr><td>Coach: </td><td>" . floatval($v['suma_coach']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_coach']) * floatval($r['peso']) . "</td></tr>";
                             $consolidado += floatval($v['suma_coach']) * floatval($r['peso']);
-
-                            echo "</table>";
                         }
                     }
 
                     if ($r['modo_de_evaluacion'] == '360') {
                         if ($r['peso'] == '0.25' || $r['peso'] == '0.35' || $r['peso'] == '0.4') {
-                            echo "<table>";
+                            if (isset($_GET['debug'])) {
+                                echo "<table>";
 
-                            echo "<tr><td>Autoevaluador: </td><td>" . floatval($v['suma_autoevaluador']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_autoevaluador']) * floatval($r['peso']) . "</td></tr>";
+                                echo "<tr><td>Autoevaluador: </td><td>" . floatval($v['suma_autoevaluador']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_autoevaluador']) * floatval($r['peso']) . "</td></tr>";
+                                echo "<tr><td>Colaborador: </td><td>" . floatval($v['suma_colaborador']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_colaborador']) * floatval($r['peso']) . "</td></tr>";
+                                echo "<tr><td>Coach 360: </td><td>" . floatval($v['suma_coach_360']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_coach_360']) * floatval($r['peso']) . "</td></tr>";
+                                echo "</table>";
+                            }
+                            
                             $consolidado += floatval($v['suma_autoevaluador']) * floatval($r['peso']);
-                            
-                            echo "<tr><td>Colaborador: </td><td>" . floatval($v['suma_colaborador']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_colaborador']) * floatval($r['peso']) . "</td></tr>";
                             $consolidado += floatval($v['suma_colaborador']) * floatval($r['peso']);
-                            
-                            echo "<tr><td>Coach 360: </td><td>" . floatval($v['suma_coach_360']) . " x " . floatval($r['peso']) . " = " . floatval($v['suma_coach_360']) * floatval($r['peso']) . "</td></tr>";
                             $consolidado += floatval($v['suma_coach_360']) * floatval($r['peso']);
-
-                            echo "</table>";
                         }
                     }
                 }
 
-                echo "<b>Consolidado: $consolidado </b><br>";
+                if (isset($_GET['debug'])) {
+                    echo "<b>Consolidado: $consolidado </b><br>";
+                }
 
                 $query = $this->db->prepare("
                     update AR_Resultado_Indicador 
@@ -851,9 +858,11 @@
 
                 return $query->rowCount() > 0;
             } catch (Exception $ex) {
-                echo "Error chequeando indicador:<br>";
-                print_r($row);
-                echo "<br>";
+                if (isset($_GET['debug'])) {
+                    echo "Error chequeando indicador:<br>";
+                    print_r($row);
+                    echo "<br>";
+                }
                 return false;
             }
         }
