@@ -25,5 +25,9 @@
 			Procesar Indicadores <br>
 			<small>(duración aprox. 4 hrs.)</small>
 		</a>
+		<a href="php/process.php?a=objetivos" class="btn btn-default">
+			Procesar Objetivos <br>
+			<small>(duración aprox. 30 min.)</small>
+		</a>
 	</div>
 </div>

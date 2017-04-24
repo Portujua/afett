@@ -14,12 +14,38 @@
 		die();
 	}
 
+	if (isset($_GET['fixIndicadores'])) {
+		$dbh->arreglar_indicadores();
+
+		redirect();
+		die();
+	}
+
 	if (isset($_GET['soloAct'])) {
 		$fn = "actualizar_".$_GET['a'];
 		$dbh->$fn();
 
-		if (!isset($_GET['noRedirect']))
-			redirect();
+		if (!isset($_GET['noRedirect'])) {
+			if ($_GET['a'] == 'indicadores') {
+				echo "Redirigiendo en 3 segundos para generar los resultados consolidados..<br>";
+				echo "
+					<script> setTimeout(() => { window.location = '".getUrl()."&fixIndicadores' }, 3000)  </script>
+				";
+			}
+			else {
+				redirect();
+			}
+		}
+		die();
+	}
+
+	if (isset($_GET['fixResultados'])) {
+		$dbh->arreglar_resultados();
+
+		echo "Redirigiendo en 3 segundos para generar los resultados consolidados..<br>";
+		echo "
+			<script> setTimeout(() => { window.location = '".getUrl()."&soloAct' }, 3000)  </script>
+		";
 		die();
 	}
 
@@ -49,6 +75,9 @@
 			"indicador" => ["pk" => false, "picklist" => true, "checkFn" => "check_indicador"],
 			"id_resultado" => ["pk" => true, "tabla" => "AR_Resultado_Indicador", "campo" => "id_resultado", "picklist" => true, "createFn" => "crear_indicadores", "checkFn" => "check_indicadores"],
 		);
+	}
+	elseif ($_GET['a'] == 'objetivos') {
+		// Para hacerlo valido
 	}
 	else {
 		echo "Archivo no válido.";
@@ -89,6 +118,19 @@
 		}
 
 		if (count($r) == 0) {
+			continue;
+		}
+
+		// Solo objetivos
+		if ($_GET['a'] == 'objetivos') {
+			if (!$dbh->check_objetivo($r)) {
+				$dbh->crear_objetivo($r);
+			}
+			else {
+				echo "Objetivo ya existente: ";
+				print_r($r);
+				echo "<br><br>";
+			}
 			continue;
 		}
 
@@ -180,9 +222,15 @@
 	}
 
 	if (($_GET['a'] == "resultados" || $_GET['a'] == "indicadores") && !isset($_GET['soloAct'])) {
+		$nextOption = "soloAct";
+
+		if ($_GET['a'] == "resultados") {
+			$nextOption = "fixResultados";
+		}
+
 		echo "Redirigiendo en 3 segundos para generar los resultados consolidados..<br>";
 		echo "
-			<script> setTimeout(() => { window.location = '".getUrl()."&soloAct' }, 3000)  </script>
+			<script> setTimeout(() => { window.location = '".getUrl()."&".$nextOption."' }, 3000)  </script>
 		";
 
 		die();
